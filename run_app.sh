@@ -1,32 +1,21 @@
 #!/bin/bash
 
-# Print header
-echo "==============================================="
-echo "  AeroHub RUL Predictor - Setup and Launch"
-echo "==============================================="
+echo "Preparing environment for AeroHub RUL Predictor..."
 
-# Check Python installation
-echo "Checking Python installation..."
-python --version
-
-# Check if NumPy is already at the correct version
-NUMPY_VERSION=$(python -c "import numpy; print(numpy.__version__)" 2>/dev/null)
-if [[ $? -ne 0 ]]; then
-    echo "NumPy not installed. Installing required version..."
-    pip install "numpy<2.0.0"
-elif [[ "$NUMPY_VERSION" == 2.* ]]; then
-    echo "NumPy version $NUMPY_VERSION detected. Downgrading to compatible version..."
-    pip install "numpy<2.0.0" --force-reinstall
-else
-    echo "NumPy version $NUMPY_VERSION is compatible."
+# Check if pip is installed
+if ! command -v pip &> /dev/null; then
+    echo "Error: pip is not installed. Please install Python and pip first."
+    exit 1
 fi
 
-# Install other dependencies if needed
-echo "Checking other dependencies..."
-pip install -r requirement.txt
+# Install required packages
+echo "Installing required packages..."
+pip install -q streamlit torch pandas numpy matplotlib scikit-learn
 
-# Launch the application
-echo "Launching AeroHub RUL Predictor..."
-streamlit run app.py
+# Install optional packages for advanced models (if needed)
+echo "Installing optional packages for advanced models..."
+pip install -q tensorflow lightgbm joblib
 
-echo "Application closed." 
+# Run the Streamlit app
+echo "Starting AeroHub RUL Predictor..."
+streamlit run app.py 

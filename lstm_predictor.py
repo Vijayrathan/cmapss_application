@@ -81,22 +81,38 @@ def create_rolling_features(df, sensor_names, window_size=5):
                         f'{sensor}_rolling_min', f'{sensor}_rolling_max'])
     return df, features
 
-def generate_sequences(df, features, window_size=30):
+def generate_sequences(df, features, window_size=30, include_cycle_data=False):
     sequences = []
     labels = []
+    engine_ids = []
+    cycle_info = []
     grouped = df.groupby('unit_number')
 
-    for _, group in grouped:
+    for unit, group in grouped:
         data = group[features].values
         rul_values = group['RUL'].values
+        
+        # Get cycle information if it exists
+        if 'time_cycles' in group.columns:
+            cycles = group['time_cycles'].values
+        else:
+            # Fallback to index if time_cycles not available
+            cycles = np.arange(len(group))
 
         for i in range(len(group) - window_size + 1):
             seq = data[i:i + window_size]
             label = rul_values[i + window_size - 1]
+            cycle = cycles[i + window_size - 1]
+            
             sequences.append(seq)
             labels.append(label)
+            engine_ids.append(unit)
+            cycle_info.append(cycle)
 
-    return np.array(sequences), np.array(labels)
+    if include_cycle_data:
+        return np.array(sequences), np.array(labels), np.array(engine_ids), np.array(cycle_info)
+    else:
+        return np.array(sequences), np.array(labels)
 
 def predict_with_lstm(df, model_path=None, window_size=30):
     """
